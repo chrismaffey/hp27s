@@ -2,18 +2,18 @@
 services:
   customprint:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: prod
     container_name: wherethefuckaremypants
     restart: unless-stopped
-    volumes:
-      - ../public_html:/var/www/html
+
     ports:
       - "8012:80"
     environment:
       - TZ=Pacific/Auckland
     env_file:
-      - ../.env
+      - .env
     networks:
       - web
     labels:

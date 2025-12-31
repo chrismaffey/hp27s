@@ -2,11 +2,12 @@
 services:
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: dev
     container_name: wherethefuckaremypants
     volumes:
-      - ../public_html:/var/www/html
+      - ../public_html:/usr/share/nginx/html
     ports:
       - "8013:80"
     environment:

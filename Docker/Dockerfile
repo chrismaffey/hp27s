@@ -1,8 +1,10 @@
-# Use the official lightweight Nginx image
-FROM nginx:alpine
-
-# Copy your static website files to the Nginx default serving directory
-COPY . /usr/share/nginx/html
-
-# The container exposes port 80 by default, and the CMD is already set in the base image
+# Docker/Dockerfile
+FROM nginx:alpine AS base
 EXPOSE 80
+
+FROM base AS prod
+# copy site into image for production builds (build context should be project root)
+COPY public_html /usr/share/nginx/html
+
+FROM base AS dev
+# dev target intentionally does not COPY so compose can mount the host folder
