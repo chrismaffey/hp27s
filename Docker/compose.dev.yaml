@@ -1,0 +1,13 @@
+# File: `docker-compose.yaml`
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wherethefuckaremypants
+    volumes:
+      - ../public_html:/var/www/html
+    ports:
+      - "8013:80"
+    environment:
+      - TZ=pacific/Auckland

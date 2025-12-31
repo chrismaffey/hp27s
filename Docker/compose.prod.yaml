@@ -1,0 +1,34 @@
+# File: `docker-compose.yaml`
+services:
+  customprint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wherethefuckaremypants
+    restart: unless-stopped
+    volumes:
+      - ../public_html:/var/www/html
+    ports:
+      - "8012:80"
+    environment:
+      - TZ=Pacific/Auckland
+    env_file:
+      - ../.env
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+
+      # HTTPS
+      - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.${APP_NAME}-secure.entrypoints=websecure
+      - traefik.http.routers.${APP_NAME}-secure.tls=true
+      - traefik.http.routers.${APP_NAME}-secure.tls.certresolver=le
+
+      # Internal port
+      - traefik.http.services.${APP_NAME}.loadbalancer.server.port=80
+
+
+networks:
+  web:
+    external: true
