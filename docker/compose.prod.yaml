@@ -8,8 +8,6 @@ services:
     container_name: wherethefuckaremypants
     restart: unless-stopped
 
-    ports:
-      - "8013:80"
     environment:
       - TZ=Pacific/Auckland
     env_file:
