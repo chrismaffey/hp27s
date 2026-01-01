@@ -1,6 +1,6 @@
 # File: `docker-compose.yaml`
 services:
-  customprint:
+  wherethefuckaremypants:
     build:
       context: ..
       dockerfile: docker/Dockerfile
