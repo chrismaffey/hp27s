@@ -1,4 +1,4 @@
 <?php
-//phpinfo();
-echo exec('whoami') . ' - ' . time();
+phpinfo();
+//echo exec('whoami') . ' - ' . time();
 
