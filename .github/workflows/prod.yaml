@@ -12,7 +12,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: deploy.docker3.php.nz
-          username: deploy
+          username: wherethefuckaremypants
           key: ${{ secrets.DEPLOY_KEY }}
-          script: /home/deploy/deploy.sh wherethefuckaremypants
+          script: /home/wherethefuckaremypants/wherethefuckaremypants/deploy.sh
 
