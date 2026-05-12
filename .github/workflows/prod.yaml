@@ -12,6 +12,9 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: deploy.docker3.php.nz
+          proxy_password: ${{ secrets.PROXY_PASSWORD }}
+          proxy_host: ip.maffey.com
+          proxy_username: githubproxy
           username: wherethefuckaremypants
           key: ${{ secrets.DEPLOY_KEY }}
           script: /home/wherethefuckaremypants/wherethefuckaremypants/deploy.sh
