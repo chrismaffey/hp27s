@@ -16,7 +16,7 @@ services:
       - web
     labels:
       - traefik.enable=true
-      - traefik.http.routers.${APP_NAME}-secure.rule=Host(`test.docker3.php.nz`)
+      - traefik.http.routers.${APP_NAME}-secure.rule=Host(`monkey.docker3.php.nz`) || Host(`farmer.docker3.php.nz`)
       - traefik.http.routers.${APP_NAME}-secure.entrypoints=websecure
       # HTTPS
    #   - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)  || Host(`www.${APP_DOMAIN}`)
