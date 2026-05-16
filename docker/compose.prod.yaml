@@ -19,14 +19,7 @@ services:
       - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)  || Host(`www.${APP_DOMAIN}`)
       - traefik.http.routers.${APP_NAME}-secure.entrypoints=websecure
       - traefik.http.routers.${APP_NAME}-secure.middlewares=common@docker
-      # HTTPS
-   #   - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)  || Host(`www.${APP_DOMAIN}`)
-  #    - traefik.http.routers.${APP_NAME}-secure.entrypoints=websecure
-#      - traefik.http.routers.${APP_NAME}-secure.tls=true
- #     - traefik.http.routers.${APP_NAME}-secure.tls.certresolver=le
 
-      # Internal port
-      # - traefik.http.services.${APP_NAME}.loadbalancer.server.port=80
 
 
 networks:
