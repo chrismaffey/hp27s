@@ -18,7 +18,7 @@ services:
       - traefik.enable=true
 
       # HTTPS
-      - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)
+      - traefik.http.routers.${APP_NAME}-secure.rule=Host(`${APP_DOMAIN}`)  || Host(`www.${APP_DOMAIN}`)
       - traefik.http.routers.${APP_NAME}-secure.entrypoints=websecure
       - traefik.http.routers.${APP_NAME}-secure.tls=true
       - traefik.http.routers.${APP_NAME}-secure.tls.certresolver=le
