@@ -5,6 +5,6 @@ cd "$(dirname "$0")"
 
 git pull
 
-docker compose up -d --build
+UID=$(id -u) GID=$(id -g) docker compose up -d --build
 
 #php artisan migrate --force

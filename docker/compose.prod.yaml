@@ -7,7 +7,7 @@ services:
       target: prod
     container_name: wherethefuckaremypants
     restart: unless-stopped
-
+    user: "${UID}:${GID}"
     environment:
       - TZ=Pacific/Auckland
     env_file:
