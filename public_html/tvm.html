@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#132c2e">
+  <meta name="description" content="A modern time value of money calculator inspired by the HP-27S.">
+  <title>TVM Studio · HP-27S</title>
+  <link rel="icon" type="image/jpeg" href="assets/hp-27s.jpg">
+  <link rel="stylesheet" href="assets/tvm.css">
+  <script src="assets/tvm.js" defer></script>
+  <script src="assets/alpine.min.js" defer></script>
+</head>
+<body>
+  <main x-data="tvmCalculator" x-cloak>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Return to HP-27S calculator">
+        <span class="brand-mark">27</span>
+        <span>HP-27S Lab</span>
+      </a>
+      <nav aria-label="Calculator pages">
+        <a href="index.html">Calculator</a>
+        <a class="active" href="tvm.html" aria-current="page">TVM Studio</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Time value of money</p>
+        <h1>Put time<br>to work.</h1>
+      </div>
+      <p class="hero-copy">Solve loans, savings plans and annuities using the same five-variable model as the HP-27S. Enter any four values and calculate the fifth.</p>
+    </section>
+
+    <section class="workspace">
+      <form class="calculator-card" @submit.prevent="calculateMissing()" novalidate>
+        <div class="card-heading">
+          <div>
+            <p class="step">01 · Conditions</p>
+            <h2>Payment setup</h2>
+          </div>
+          <button class="text-button" type="button" @click="reset()">Clear all</button>
+        </div>
+
+        <div class="conditions-grid">
+          <label class="control">
+            <span>Payments per year</span>
+            <input type="number" min="1" max="999" step="1" inputmode="numeric" x-model.number="paymentsPerYear" @input="markChanged()">
+          </label>
+
+          <fieldset class="timing-control">
+            <legend>Payment timing</legend>
+            <div class="segment">
+              <button type="button" :class="{ active: timing === 'END' }" @click="timing = 'END'; markChanged()">End</button>
+              <button type="button" :class="{ active: timing === 'BEG' }" @click="timing = 'BEG'; markChanged()">Beginning</button>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <div class="card-heading variables-heading">
+          <div>
+            <p class="step">02 · Cash flows</p>
+            <h2>Enter four values</h2>
+          </div>
+          <span class="completion" x-text="`${completedCount}/5 entered`"></span>
+        </div>
+
+        <div class="variable-list">
+          <template x-for="field in fieldDefinitions" :key="field.key">
+            <div class="variable-row" :class="{ 'solve-target': values[field.key] === '' }">
+              <label :for="`tvm-${field.key}`">
+                <span class="variable-symbol" x-text="field.label"></span>
+                <span class="variable-copy">
+                  <strong x-text="field.name"></strong>
+                  <small x-text="field.help"></small>
+                </span>
+              </label>
+              <div class="field-action">
+                <span class="field-prefix" x-show="field.prefix" x-text="field.prefix"></span>
+                <input
+                  :id="`tvm-${field.key}`"
+                  type="number"
+                  inputmode="decimal"
+                  step="any"
+                  :placeholder="field.placeholder"
+                  x-model="values[field.key]"
+                  @input="markChanged()"
+                  :aria-label="field.name">
+                <span class="field-suffix" x-show="field.suffix" x-text="field.suffix"></span>
+                <button class="solve-button" type="button" @click="solve(field.key)" :aria-label="`Solve ${field.name}`">Solve</button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="message" :class="messageType" x-show="message" x-transition.opacity>
+          <span aria-hidden="true" x-text="messageType === 'error' ? '!' : '✓'"></span>
+          <p x-text="message"></p>
+        </div>
+
+        <button class="primary-button" type="submit">
+          <span>Calculate missing value</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </form>
+
+      <aside class="results-column">
+        <section class="result-card" :class="{ populated: result }" aria-live="polite">
+          <div class="result-topline">
+            <p class="step">Result</p>
+            <span x-text="`${paymentsPerYear} P/YR · ${timing} MODE`"></span>
+          </div>
+
+          <template x-if="result">
+            <div>
+              <p class="result-label" x-text="result.label"></p>
+              <p class="result-value" x-text="formatResult(result.key, result.value)"></p>
+              <p class="result-note" x-text="result.description"></p>
+            </div>
+          </template>
+
+          <template x-if="!result">
+            <div class="empty-result">
+              <div class="orbit" aria-hidden="true"><span></span></div>
+              <p>Your answer will appear here.</p>
+              <small>Leave one value empty, or use any field’s Solve button.</small>
+            </div>
+          </template>
+
+          <div class="cashflow" x-show="result">
+            <div class="cashflow-line"></div>
+            <div class="cashflow-point start">
+              <span>Now</span>
+              <strong x-text="displayCashFlow('pv')"></strong>
+            </div>
+            <div class="cashflow-point middle">
+              <span>Each period</span>
+              <strong x-text="displayCashFlow('pmt')"></strong>
+            </div>
+            <div class="cashflow-point end">
+              <span>Finish</span>
+              <strong x-text="displayCashFlow('fv')"></strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="guide-card">
+          <div class="guide-heading">
+            <p class="step">Try an example</p>
+            <span>From the HP-27S manual</span>
+          </div>
+          <div class="examples">
+            <button type="button" @click="loadExample('car')">
+              <span class="example-icon">01</span>
+              <span><strong>Car loan</strong><small>Find the monthly payment</small></span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <button type="button" @click="loadExample('mortgage')">
+              <span class="example-icon">02</span>
+              <span><strong>Home mortgage</strong><small>Find the affordable loan</small></span>
+              <span aria-hidden="true">↗</span>
+            </button>
+            <button type="button" @click="loadExample('savings')">
+              <span class="example-icon">03</span>
+              <span><strong>Savings goal</strong><small>Find the time required</small></span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="sign-card">
+          <span class="sign-icon">±</span>
+          <div>
+            <h3>Follow the cash</h3>
+            <p>Money you receive is positive. Money you pay out is negative. For a loan, enter the amount borrowed as positive and repayments as negative.</p>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <footer>
+      <p>Built around the HP-27S TVM model.</p>
+      <a href="https://literature.hpcalc.org/community/hp27s-om-en.pdf" target="_blank" rel="noreferrer">Read the original manual ↗</a>
+    </footer>
+  </main>
+</body>
+</html>
