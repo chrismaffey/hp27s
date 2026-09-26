@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171816">
+  <meta name="description" content="A browser-based HP-27S scientific calculator emulator.">
+  <title>HP-27S Calculator</title>
+  <link rel="icon" type="image/jpeg" href="assets/hp-27s.jpg">
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/app.js" defer></script>
+  <script src="assets/alpine.min.js" defer></script>
+</head>
+<body>
+  <main class="page-shell" x-data="calculator" @keydown.window="handleKeyboard($event)">
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">1988 · algebraic scientific calculator</p>
+      <h1 id="page-title">HP-27S<br><span>in your browser.</span></h1>
+      <p class="lede">A tactile recreation built directly on the original machine. Click the photographed keys, or use your keyboard.</p>
+
+      <div class="status-card" x-show="appMode === 'calculator'" aria-live="polite">
+        <div>
+          <span class="status-label">Angle</span>
+          <button class="mode-switch" type="button" @click="toggleAngle()" x-text="angleMode" aria-label="Toggle angle mode"></button>
+        </div>
+        <div>
+          <span class="status-label">Memory</span>
+          <strong x-text="memory === null ? 'EMPTY' : format(memory)"></strong>
+        </div>
+      </div>
+
+      <div class="tvm-card" x-show="appMode !== 'calculator'" x-cloak aria-live="polite">
+        <div class="tvm-card-head">
+          <span>TVM registers</span>
+          <strong x-text="`${tvm.paymentsPerYear} P/YR · ${tvm.timing} MODE`"></strong>
+        </div>
+        <div class="tvm-registers">
+          <template x-for="field in ['n', 'rate', 'pv', 'pmt', 'fv']" :key="field">
+            <div>
+              <span x-text="tvmLabel(field)"></span>
+              <strong x-text="tvm[field] === null ? '—' : formatTvm(tvm[field])"></strong>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="quick-guide">
+        <template x-if="appMode === 'calculator'">
+          <div>
+            <p><kbd>0–9</kbd> <kbd>+ − × ÷</kbd> <kbd>Enter</kbd></p>
+            <p>Press <kbd>blue</kbd> then <kbd>9 · TVM</kbd> for finance</p>
+          </div>
+        </template>
+        <template x-if="appMode !== 'calculator'">
+          <div>
+            <p>Enter a value, then press its display key to store it.</p>
+            <p>Press an unknown register’s key to solve.</p>
+            <p>Cash received is positive · cash paid is negative.</p>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section class="calculator-wrap" aria-label="HP-27S calculator emulator">
+      <div class="calculator" :class="{ 'is-off': !powered, 'shift-on': shift }">
+        <img src="assets/hp-27s.jpg" width="800" height="1474" alt="Front of a Hewlett-Packard HP-27S scientific calculator" draggable="false">
+
+        <div class="lcd" :class="{ 'has-menu': appMode !== 'calculator' }" aria-live="polite" aria-atomic="true">
+          <div class="lcd-meta">
+            <span x-text="shift ? 'f' : ''"></span>
+            <span x-text="memory !== null ? 'M' : ''"></span>
+            <span x-text="angleMode"></span>
+          </div>
+          <div class="lcd-expression" x-text="powered ? expressionLine : ''"></div>
+          <div class="lcd-value" x-text="powered ? display : ''"></div>
+          <div class="lcd-menu" x-show="powered && appMode !== 'calculator'" x-cloak>
+            <template x-for="(label, index) in tvmMenuLabels()" :key="index">
+              <span x-text="label"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="keys" aria-label="Calculator keypad">
+          <button class="key soft c1 r1" type="button" @click="appMode === 'calculator' ? applyFunction('sqrt') : tvmSoftKey(0)" aria-label="Display key 1"></button>
+          <button class="key soft c2 r1" type="button" @click="appMode === 'calculator' ? applyFunction('square') : tvmSoftKey(1)" aria-label="Display key 2"></button>
+          <button class="key soft c3 r1" type="button" @click="appMode === 'calculator' ? applyFunction('exp') : tvmSoftKey(2)" aria-label="Display key 3"></button>
+          <button class="key soft c4 r1" type="button" @click="appMode === 'calculator' ? applyFunction('ln') : tvmSoftKey(3)" aria-label="Display key 4"></button>
+          <button class="key soft c5 r1" type="button" @click="appMode === 'calculator' ? operator('^') : tvmSoftKey(4)" aria-label="Display key 5"></button>
+          <button class="key soft c6 r1" type="button" @click="appMode === 'calculator' ? applyFunction('reciprocal') : tvmSoftKey(5)" aria-label="Display key 6"></button>
+
+          <button class="key soft c1 r2" type="button" @click="storageKey('store')" :aria-label="shift ? 'Ten to the power x' : 'Store in memory'"></button>
+          <button class="key soft c2 r2" type="button" @click="storageKey('recall')" :aria-label="shift ? 'Common logarithm' : 'Recall memory'"></button>
+          <button class="key soft c3 r2" type="button" @click="trig('sin')" :aria-label="shift ? 'Inverse sine' : 'Sine'"></button>
+          <button class="key soft c4 r2" type="button" @click="trig('cos')" :aria-label="shift ? 'Inverse cosine' : 'Cosine'"></button>
+          <button class="key soft c5 r2" type="button" @click="trig('tan')" :aria-label="shift ? 'Inverse tangent' : 'Tangent'"></button>
+          <button class="key soft c6 r2" type="button" @click="exitKey()" aria-label="Exit menu"></button>
+
+          <button class="key input r3" type="button" @click="inputKey()" aria-label="Input or clear data"></button>
+          <button class="key small c3 r3" type="button" @click="toggleSign()" aria-label="Change sign"></button>
+          <button class="key small c4 r3" type="button" @click="parenthesis('(')" aria-label="Open parenthesis"></button>
+          <button class="key small c5 r3" type="button" @click="parenthesis(')')" aria-label="Close parenthesis"></button>
+          <button class="key small c6 r3" type="button" @click="backspace()" aria-label="Backspace"></button>
+
+          <button class="key nav c1 r4" type="button" @click="browseHistory(-1)" aria-label="Previous calculation"></button>
+          <button class="key number c2 r4" type="button" @click="digit('7')" aria-label="7"></button>
+          <button class="key number c3 r4" type="button" @click="digit('8')" aria-label="8"></button>
+          <button class="key number c4 r4" type="button" @click="digit('9')" aria-label="9"></button>
+          <button class="key number c5 r4" type="button" @click="operator('/')" aria-label="Divide"></button>
+
+          <button class="key nav c1 r5" type="button" @click="browseHistory(1)" aria-label="Next calculation"></button>
+          <button class="key number c2 r5" type="button" @click="digit('4')" aria-label="4"></button>
+          <button class="key number c3 r5" type="button" @click="digit('5')" aria-label="5"></button>
+          <button class="key number c4 r5" type="button" @click="digit('6')" aria-label="6"></button>
+          <button class="key number c5 r5" type="button" @click="operator('*')" aria-label="Multiply"></button>
+
+          <button class="key shift c1 r6" type="button" @click="toggleShift()" aria-label="Blue shift"></button>
+          <button class="key number c2 r6" type="button" @click="digit('1')" aria-label="1"></button>
+          <button class="key number c3 r6" type="button" @click="digit('2')" aria-label="2"></button>
+          <button class="key number c4 r6" type="button" @click="digit('3')" aria-label="3"></button>
+          <button class="key number c5 r6" type="button" @click="operator('-')" aria-label="Subtract"></button>
+
+          <button class="key number c1 r7" type="button" @click="clearOrPower()" aria-label="Clear or power on"></button>
+          <button class="key number c2 r7" type="button" @click="digit('0')" aria-label="0"></button>
+          <button class="key number c3 r7" type="button" @click="decimal()" aria-label="Decimal point"></button>
+          <button class="key number c4 r7" type="button" @click="equals()" aria-label="Equals"></button>
+          <button class="key number c5 r7" type="button" @click="operator('+')" aria-label="Add"></button>
+
+          <button class="key secondary percent" type="button" @click="percent()" aria-label="Percent"></button>
+          <button class="key secondary pi" type="button" @click="constantPi()" aria-label="Pi"></button>
+        </div>
+      </div>
+      <p class="tap-hint">Tap any key on the calculator</p>
+    </section>
+  </main>
+
+  <footer>
+    <span>HP-27S browser study</span>
+    <a href="https://commons.wikimedia.org/wiki/File:Hp-27s.jpg" target="_blank" rel="noreferrer">Photo by Lukke · Public domain</a>
+  </footer>
+</body>
+</html>
