@@ -3,11 +3,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-      target: dev
+      target: prod
     container_name: wherethefuckaremypants
-    volumes:
-      - ./public_html:/usr/share/nginx/html
-    ports:
-      - "80:80"
     environment:
       - TZ=pacific/Auckland
