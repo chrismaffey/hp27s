@@ -1,10 +1,10 @@
 services:
-  app:
+  hp27s:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
       target: dev
-    container_name: wherethefuckaremypants
+    container_name: hp27s
     volumes:
       - ./public_html:/usr/share/nginx/html
     ports:
