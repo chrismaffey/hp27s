@@ -7,3 +7,14 @@ services:
     container_name: hp27s
     environment:
       - TZ=pacific/Auckland
+    volumes:
+      # Map the named volume to your container's upload path
+      - external-gallery-storage:/app/public/uploads
+volumes:
+  external-gallery-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      # The absolute path where your secondary disk is mounted on the server VPS
+      device: /mnt/gallery
